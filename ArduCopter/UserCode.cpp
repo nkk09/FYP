@@ -18,7 +18,7 @@ void Copter::userhook_FastLoop()
 #ifdef USERHOOK_50HZLOOP
 void Copter::userhook_50Hz()
 {
-    // put your 50Hz code here
+
 }
 #endif
 
@@ -32,7 +32,12 @@ void Copter::userhook_MediumLoop()
 #ifdef USERHOOK_SLOWLOOP
 void Copter::userhook_SlowLoop()
 {
-    // put your 3.3Hz code here
+    static uint32_t last_ms = 0;
+    const uint32_t now = AP_HAL::millis();
+    if (now - last_ms >= 5000 && gcs().any_connected()) {
+        gcs().send_text(MAV_SEVERITY_INFO, "Hello FYP TEAM");
+        last_ms = now;
+    }
 }
 #endif
 
