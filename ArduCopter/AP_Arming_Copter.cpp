@@ -113,6 +113,7 @@ bool AP_Arming_Copter::rc_throttle_failsafe_checks(bool display_failure) const
     if (!rc().has_had_rc_receiver() && !rc().has_had_rc_override()) {
         check_failed(Check::RC, display_failure, "RC not found BUT HELLO FYP TEAM");
         return false;
+        
     }
 
     // check throttle is not too low - must be above failsafe throttle

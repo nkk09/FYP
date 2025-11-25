@@ -959,6 +959,13 @@ bool Copter::get_rate_ef_targets(Vector3f& rate_ef_targets) const
     return true;
 }
 
+// // --- LED constants ---
+// static constexpr uint8_t LED_SERVO_CH = 8; 
+// static constexpr uint16_t LED_PWM_OFF = 1000;
+// static constexpr uint16_t LED_PWM_ON  = 2000;
+// static constexpr uint32_t LED_PERIOD_MS = 500; // 2 Hz blink
+
+
 /*
   constructor for main Copter class
  */
@@ -980,3 +987,20 @@ Copter copter;
 AP_Vehicle& vehicle = copter;
 
 AP_HAL_MAIN_CALLBACKS(&copter);
+
+// void Copter::update_led_blink()
+// {
+//     static uint32_t last_toggle = 0;
+//     static bool led_on = false;
+
+//     const uint32_t now = AP_HAL::millis();
+//     if (now - last_toggle >= LED_PERIOD_MS) {
+//         led_on = !led_on;
+//         last_toggle = now;
+//     }
+
+//     SRV_Channels::set_output_pwm_chan(LED_SERVO_CH,
+//                                       led_on ? LED_PWM_ON : LED_PWM_OFF);
+// }
+
+

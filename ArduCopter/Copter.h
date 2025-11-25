@@ -178,6 +178,8 @@
 #endif
 #include "mode.h"
 
+
+
 class Copter : public AP_Vehicle {
 public:
     friend class GCS_MAVLINK_Copter;
@@ -1112,6 +1114,11 @@ private:
 
 public:
     void failsafe_check();      // failsafe.cpp
+
+    
+
+    // void update_led_blink();
+
 };
 
 extern Copter copter;
