@@ -101,6 +101,7 @@ public:
         AUTOROTATE =   26,  // Autonomous autorotation
         AUTO_RTL =     27,  // Auto RTL, this is not a true mode, AUTO will report as this mode if entered to perform a DO_LAND_START Landing sequence
         TURTLE =       28,  // Flip over after crash
+        BLINK =        29,  // Blink mode
 
         // Mode number 30 reserved for "offboard" for external/lua control.
 
@@ -2035,6 +2036,32 @@ private:
     int16_t line_num = 0;           // target line number
     bool is_suspended;              // true if zigzag auto is suspended
 };
+
+class ModeBlink : public Mode {
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::BLINK; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return false; }
+    bool is_autopilot() const override { return false; }
+
+protected:
+
+    const char *name() const override { return "BLINK"; }
+    const char *name4() const override { return "BLNK"; }
+
+private:
+
+};
+
+
 
 #if MODE_AUTOROTATE_ENABLED
 class ModeAutorotate : public Mode {
