@@ -1,5 +1,6 @@
 #include "Copter.h"
 #include <AP_HAL/AP_HAL.h>
+#include <GCS_MAVLink/GCS.h>   // for gcs().send_text()
 
 extern const AP_HAL::HAL& hal;
 
@@ -8,6 +9,8 @@ static constexpr uint8_t  BLINK_OUT_CH   = 8;     // 0-based output channel. 8 =
 static constexpr uint16_t BLINK_PWM_ON   = 1900;  // microseconds
 static constexpr uint16_t BLINK_PWM_OFF  = 1100;  // microseconds
 static constexpr uint32_t BLINK_PERIOD_MS = 500;  // toggle every 500ms
+
+static constexpr uint32_t MSG_PERIOD_MS   = 2000; // send status text every 2s
 // =========================================
 
 bool ModeBlink::init(bool ignore_checks)
@@ -17,10 +20,12 @@ bool ModeBlink::init(bool ignore_checks)
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::SHUT_DOWN);
     }
 
-    // Optional: immediately write "OFF" so it starts from a known state
+    // Start from known output state
     hal.rcout->write(BLINK_OUT_CH, BLINK_PWM_OFF);
 
-    // ignore_checks is intentionally ignored — this mode is for bench testing
+    // One-time MAVLink message on entry
+    gcs().send_text(MAV_SEVERITY_INFO, "Mode=BLINK (bench PWM)");
+
     return true;
 }
 
@@ -33,6 +38,7 @@ void ModeBlink::run()
 
     const uint32_t now = AP_HAL::millis();
 
+    // PWM blinking
     static uint32_t last_toggle_ms = 0;
     static bool state_on = false;
 
@@ -42,5 +48,14 @@ void ModeBlink::run()
 
         const uint16_t pwm = state_on ? BLINK_PWM_ON : BLINK_PWM_OFF;
         hal.rcout->write(BLINK_OUT_CH, pwm);
+    }
+
+    // Periodic MAVLink "still in blink" message (throttled)
+    static uint32_t last_msg_ms = 0;
+    if (now - last_msg_ms >= MSG_PERIOD_MS) {
+        last_msg_ms = now;
+
+        // Keep it short; STATUSTEXT has length limits
+        gcs().send_text(MAV_SEVERITY_DEBUG, "BLINK running");
     }
 }

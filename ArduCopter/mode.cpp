@@ -152,6 +152,11 @@ Mode *Copter::mode_from_mode_num(const Mode::Number mode)
             return &mode_turtle;
 #endif
 
+#if MODE_BLINK_ENABLED
+    case Mode::Number::BLINK:
+        return &mode_blink;
+#endif
+
         default:
             break;
     }
