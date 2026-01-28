@@ -15,16 +15,12 @@ static constexpr uint32_t MSG_PERIOD_MS   = 2000; // send status text every 2s
 
 bool ModeBlink::init(bool ignore_checks)
 {
-    // We are NOT flying. Make sure motors stay shut down.
-    if (motors != nullptr) {
+    // keep your motor shutdown
+    if (motors) {
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::SHUT_DOWN);
     }
-
     // Start from known output state
     hal.rcout->write(BLINK_OUT_CH, BLINK_PWM_OFF);
-
-    // One-time MAVLink message on entry
-    gcs().send_text(MAV_SEVERITY_INFO, "Mode=BLINK (bench PWM)");
 
     return true;
 }
@@ -55,7 +51,6 @@ void ModeBlink::run()
     if (now - last_msg_ms >= MSG_PERIOD_MS) {
         last_msg_ms = now;
 
-        // Keep it short; STATUSTEXT has length limits
         gcs().send_text(MAV_SEVERITY_DEBUG, "BLINK running");
     }
 }
