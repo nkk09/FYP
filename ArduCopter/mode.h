@@ -2056,8 +2056,12 @@ protected:
 
     const char *name() const override { return "BLINK"; }
     const char *name4() const override { return "BLNK"; }
-
+    
 private:
+    uint32_t _last_toggle_ms = 0;
+    uint32_t _last_msg_ms = 0;
+    bool _state_on = false;
+
 
 };
 
