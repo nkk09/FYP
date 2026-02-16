@@ -103,7 +103,9 @@ public:
         TURTLE =       28,  // Flip over after crash
         BLINK =        29,  // Blink mode
 
+
         // Mode number 30 reserved for "offboard" for external/lua control.
+        TILTSERVO = 31,
 
         // Mode number 127 reserved for the "drone show mode" in the Skybrush
         // fork at https://github.com/skybrush-io/ardupilot
@@ -2063,6 +2065,47 @@ private:
     bool _state_on = false;
 
 
+};
+
+class ModeTiltServo : public Mode {
+
+public:
+    // inherit constructor (important for your branch)
+    using Mode::Mode;
+
+    Number mode_number() const override { return Number::TILTSERVO; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return false; }
+    bool is_autopilot() const override { return false; }
+
+protected:
+    const char *name() const override { return "TILTSERVO"; }
+    const char *name4() const override { return "TSRV"; }
+
+private:
+    // ===== Servo (tilt) behavior =====
+    static constexpr uint16_t SERVO_PWM_MIN  = 1100;
+    static constexpr uint16_t SERVO_PWM_TRIM = 1500;
+    static constexpr uint16_t SERVO_PWM_MAX  = 1900;
+
+    // +/- pitch range where servo hits min/max
+    static constexpr float SERVO_PITCH_RANGE_DEG = 20.0f;
+
+    // deadband around level
+    static constexpr float PITCH_DEADBAND_DEG = 5.0f;
+
+    // ===== Motors forced PWM (bench) =====
+    static constexpr uint16_t MOTOR_PWM_ON  = 1600;
+    static constexpr uint16_t MOTOR_PWM_OFF = 1000;
+
+    // debug
+    static constexpr uint32_t MSG_PERIOD_MS = 2000;
+    uint32_t _last_msg_ms = 0;
 };
 
 

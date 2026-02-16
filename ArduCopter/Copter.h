@@ -230,6 +230,7 @@ public:
     friend class ModeAutorotate;
     friend class ModeTurtle;
     friend class ModeBlink;
+    friend class ModeTiltServo;
 
     friend class _AutoTakeoff;
 
@@ -1107,6 +1108,9 @@ private:
 #endif
 #if MODE_BLINK_ENABLED
     ModeBlink mode_blink;
+#endif
+#if MODE_TILTSERVO_ENABLED
+    ModeTiltServo mode_tiltservo;
 #endif
 
     // mode.cpp
