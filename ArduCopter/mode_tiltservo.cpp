@@ -51,7 +51,7 @@ void ModeTiltServo::run()
     const float t = (pitch_clamped + SERVO_PITCH_RANGE_DEG) / (2.0f * SERVO_PITCH_RANGE_DEG);
 
     // PWM = MIN + t*(MAX-MIN)
-    const float servo_pwm_f = SERVO_PWM_MIN + t * (SERVO_PWM_MAX - SERVO_PWM_MIN);
+    const float servo_pwm_f = SERVO_PWM_MAX - t * (SERVO_PWM_MAX - SERVO_PWM_MIN);
     const uint16_t servo_pwm = (uint16_t)constrain_int16((int16_t)servo_pwm_f, SERVO_PWM_MIN, SERVO_PWM_MAX);
 
     // Drive SERVO9 via Scripting1 mapping (same working trick as Blink)
