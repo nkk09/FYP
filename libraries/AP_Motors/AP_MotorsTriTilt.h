@@ -1,5 +1,6 @@
-/// @file	AP_MotorsTriTilt.h
-/// @brief	Motor control class for Tricopters
+/// @file    AP_MotorsTriTilt.h
+/// @brief   Motor control class for 2-tilt front + fixed tail tricopter
+
 #pragma once
 
 #include "AP_Motors_config.h"
@@ -7,85 +8,62 @@
 #if AP_MOTORS_TRI_TILT_ENABLED
 
 #include <AP_Common/AP_Common.h>
-#include <AP_Math/AP_Math.h>        // ArduPilot Mega Vector/Matrix math Library
+#include <AP_Math/AP_Math.h>
+#include <SRV_Channel/SRV_Channel.h>
 #include "AP_MotorsMulticopter.h"
 
-// tail servo uses channel 7
-#define AP_MOTORS_CH_TRI_YAW    CH_7
-
-#define AP_MOTORS_TRI_SERVO_RANGE_DEG_MIN   5   // minimum angle movement of tail servo in degrees
-#define AP_MOTORS_TRI_SERVO_RANGE_DEG_MAX   80  // maximum angle movement of tail servo in degrees
-
-/// @class      AP_MotorsTriTilt
+/// @class AP_MotorsTriTilt
+/// Layout (ArduPilot motor numbers):
+///  - AP_MOTORS_MOT_1 : Front Right motor (tilt servo = SCRIPTING1)
+///  - AP_MOTORS_MOT_2 : Front Left  motor (tilt servo = SCRIPTING2)
+///  - AP_MOTORS_MOT_4 : Tail motor (fixed, no servo)
 class AP_MotorsTriTilt : public AP_MotorsMulticopter {
 public:
-
-    /// Constructor
     AP_MotorsTriTilt(uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT) :
         AP_MotorsMulticopter(speed_hz)
-    {
-    };
+    {}
 
-    // init
-    void                init(motor_frame_class frame_class, motor_frame_type frame_type) override;
-
-    // set frame class (i.e. quad, hexa, heli) and type (i.e. x, plus)
+    void init(motor_frame_class frame_class, motor_frame_type frame_type) override;
     void set_frame_class_and_type(motor_frame_class frame_class, motor_frame_type frame_type) override;
+    void set_update_rate(uint16_t speed_hz) override;
 
-    // set update rate to motors - a value in hertz
-    void                set_update_rate( uint16_t speed_hz ) override;
+    void output_to_motors() override;
+    uint32_t get_motor_mask() override;
 
-    // output_to_motors - sends minimum values out to the motors
-    virtual void        output_to_motors() override;
+    void output_motor_mask(float thrust, uint32_t mask, float rudder_dt) override;
+    float get_roll_factor(uint8_t i) override;
 
-    // get_motor_mask - returns a bitmask of which outputs are being used for motors or servos (1 means being used)
-    //  this can be used to ensure other pwm outputs (i.e. for servos) do not conflict
-    uint32_t            get_motor_mask() override;
-
-    // output a thrust to all motors that match a given motor
-    // mask. This is used to control tiltrotor motors in forward
-    // flight. Thrust is in the range 0 to 1
-    // rudder_dt applys diffential thrust for yaw in the range 0 to 1
-    void                output_motor_mask(float thrust, uint32_t mask, float rudder_dt) override;
-
-    // return the roll factor of any motor, this is used for tilt rotors and tail sitters
-    // using copter motors for forward flight
-    float               get_roll_factor(uint8_t i) override;
-
-    // return the pitch factor of any motor, this is used for AP_Motors_test
-    float               get_pitch_factor_json(uint8_t i);
-
-    // Run arming checks
     bool arming_checks(size_t buflen, char *buffer) const override;
 
-    // Get the testing order for the motors, this is used for AP_Motors_test
-    uint8_t get_motor_test_order(uint8_t i);
-
 protected:
-    // output - sends commands to the motors
-    void                output_armed_stabilizing() override;
+    void output_armed_stabilizing() override;
+    void thrust_compensation(void) override;
 
-    // call vehicle supplied thrust compensation if set
-    void                thrust_compensation(void) override;
+    const char* _get_frame_string() const override { return "TRI_TILT_2F"; }
+    const char* get_type_string() const override { return _pitch_reversed ? "pitch-reversed" : ""; }
 
-    const char* _get_frame_string() const override { return "TRI"; }
-    const char*  get_type_string() const override { return _pitch_reversed ? "pitch-reversed" : ""; }
+    void _output_test_seq(uint8_t motor_seq, int16_t pwm) override;
 
-    // output_test_seq - spin a motor at the pwm value specified
-    //  motor_seq is the motor's sequence number from 1 to the number of motors on the frame
-    //  pwm value is an actual pwm value that will be output, normally in the range of 1000 ~ 2000
-    virtual void _output_test_seq(uint8_t motor_seq, int16_t pwm) override;
+private:
+    // tilt servos are mapped via SERVOx_FUNCTION = SCRIPTING1 / SCRIPTING2
+    static constexpr SRV_Channel::Aux_servo_function_t TILT_RIGHT_FN = SRV_Channel::k_scripting1;
+    static constexpr SRV_Channel::Aux_servo_function_t TILT_LEFT_FN  = SRV_Channel::k_scripting2;
 
-    // parameters
+    static constexpr float TILT_MAX_RAD = 0.70f; // ~40deg max mechanical tilt (adjust)
 
-    float           _pivot_angle;                       // Angle of yaw pivot
-    float           _thrust_right;
-    float           _thrust_rear;
-    float           _thrust_left;
+    // motor thrusts (0..1)
+    float _thrust_right = 0.0f;
+    float _thrust_left  = 0.0f;
+    float _thrust_rear  = 0.0f;
 
-    // reverse pitch
-    bool _pitch_reversed;
-    bool _have_tail_servo;
+    // tilt angles (rad)
+    float _tilt_right = 0.0f;
+    float _tilt_left  = 0.0f;
+
+    bool _pitch_reversed = false;
+
+    // helper: radians -> scaled [-1000..1000]
+    static int16_t tilt_to_scaled(float tilt_rad);
 };
 
-#endif  // AP_MOTORS_TRI_TILT_ENABLED
+#endif // AP_MOTORS_TRI_TILT_ENABLED
