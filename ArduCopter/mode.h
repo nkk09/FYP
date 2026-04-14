@@ -106,6 +106,7 @@ public:
 
         // Mode number 30 reserved for "offboard" for external/lua control.
         TILTSERVO = 31,
+        FYP = 32,
 
         // Mode number 127 reserved for the "drone show mode" in the Skybrush
         // fork at https://github.com/skybrush-io/ardupilot
@@ -2154,3 +2155,24 @@ private:
 
 };
 #endif
+#if MODE_FYP_ENABLED
+class ModeFYP : public Mode {
+    public:
+    using Mode::Mode;
+
+    Number mode_number() const override { return Number::FYP; }
+
+    const char *name() const override { return "FYP"; }
+    const char *name4() const override { return "FYP"; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+protected:
+    bool requires_GPS() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return true; }
+    bool has_manual_throttle() const override { return false; }
+    bool is_autopilot() const override { return false; }
+};
+
+#endif // MODE_FYP_ENABLED

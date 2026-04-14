@@ -46,8 +46,8 @@ protected:
 
 private:
     // tilt servos are mapped via SERVOx_FUNCTION = SCRIPTING1 / SCRIPTING2
-    static constexpr SRV_Channel::Aux_servo_function_t TILT_RIGHT_FN = SRV_Channel::k_scripting1;
-    static constexpr SRV_Channel::Aux_servo_function_t TILT_LEFT_FN  = SRV_Channel::k_scripting2;
+    static constexpr SRV_Channel::Function TILT_RIGHT_FN = SRV_Channel::k_scripting1;
+    static constexpr SRV_Channel::Function TILT_LEFT_FN  = SRV_Channel::k_scripting2;
 
     static constexpr float TILT_MAX_RAD = 0.70f; // ~40deg max mechanical tilt (adjust)
 

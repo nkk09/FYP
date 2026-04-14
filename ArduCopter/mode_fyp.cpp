@@ -1,91 +1,45 @@
-// Physical parameters (from Simulink)
-const float m = 4.9f;
-const float g = 9.81f;
-const float W = m * g;
+#include "Copter.h"
 
-const float L = 0.459f;
-const float c = 0.1f;
-const float I = 0.158f;
+#if MODE_FYP_ENABLED
 
-// Control gains (tune these)
-float Kp_angle = 5.0f;      // outer loop P
-float Kp_rate  = 0.8f;      // inner PID
-float Ki_rate  = 0.1f;
-float Kd_rate  = 0.02f;
-float rate_integrator = 0.0f;
-float prev_rate_error = 0.0f;
-void update_control(float theta, float theta_dot, float theta_des, float dt)
+bool ModeFYP::init(bool ignore_checks)
 {
-    // =====================================================
-    // 1 OUTER LOOP — Angle P controller
-    // =====================================================
-    float theta_error = theta_des - theta;
-    float theta_dot_des = Kp_angle * theta_error;
-
-    // =====================================================
-    // 2 INNER LOOP — Rate PID
-    // Outputs Tr directly
-    // =====================================================
-    float rate_error = theta_dot_des - theta_dot;
-
-    rate_integrator += rate_error * dt;
-    float rate_derivative = (rate_error - prev_rate_error) / dt;
-
-    float Tr = Kp_rate * rate_error
-             + Ki_rate * rate_integrator
-             + Kd_rate * rate_derivative;
-
-    prev_rate_error = rate_error;
-
-    // Saturate rear thrust
-    Tr = constrain(Tr, 0.0f, 40.0f);   // adjust max thrust as needed
-
-    // =====================================================
-    // 3 Compute alpha using your exact physics
-    // (ax=0, ay=0, no disturbances)
-    // =====================================================
-
-    float num = -Tr * sinf(theta);
-    float den =  W - Tr * cosf(theta);
-
-    float alpha = atan2f(num, den) - theta;
-
-    // =====================================================
-    // 4 Solve Tf from vertical force equation
-    // =====================================================
-
-    float Tf = (W - Tr * cosf(theta)) / cosf(alpha + theta);
-
-    Tf = constrain(Tf, 0.0f, 40.0f);
-
-    // =====================================================
-    // 5 Convert thrusts to PWM
-    // =====================================================
-    float pwm_rear  = thrust_to_pwm(Tr);
-    float pwm_front = thrust_to_pwm(Tf);
-
-    float servo_pwm = angle_to_servo_pwm(alpha);
-
-    send_pwm(REAR_MOTOR, pwm_rear);
-    send_pwm(FRONT_MOTOR, pwm_front);
-    send_pwm(SERVO, servo_pwm);
+    return true;
 }
-// EXAMPLE CONVERSION FUNCTIONS
-float thrust_to_pwm(float T)
+
+void ModeFYP::run()
 {
-    float T_min = 0.0f;
-    float T_max = 40.0f;
+    const float pitch_stick = channel_pitch->norm_input_dz();
+    const float roll_stick  = channel_roll->norm_input_dz();
+    const float yaw_stick   = channel_yaw->norm_input_dz();
 
-    float pwm_min = 1000.0f;
-    float pwm_max = 2000.0f;
+    const float MAX_PITCH_CD = 18000.0f;   // if you truly want ±180°
+    const float MAX_ROLL_CD  = 18000.0f;   
 
-    return pwm_min + (T - T_min) * (pwm_max - pwm_min) / (T_max - T_min);
+    const float pitch_target_cd = pitch_stick * MAX_PITCH_CD;
+    const float roll_target_cd  = roll_stick  * MAX_ROLL_CD;
+    const float yaw_rate_cds    = yaw_stick * 1500.0f;
+
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw_cd(
+        roll_target_cd,
+        pitch_target_cd,
+        yaw_rate_cds
+    );
+
+    // Read targets directly from attitude controller state.
+    const float pitch_target_from_ac_cd = attitude_control->get_att_target_euler_cd().y;
+    const float pitch_rate_target_rads  = attitude_control->get_attitude_target_ang_vel().y;
+    const float pitch_rate_current_rads = ahrs.get_gyro().y;
+
+    static uint32_t last_dbg_ms = 0;
+    const uint32_t now_ms = AP_HAL::millis();
+    if (now_ms - last_dbg_ms >= 1000U) {
+        last_dbg_ms = now_ms;
+        gcs().send_text(MAV_SEVERITY_INFO,
+                        "FYP tgt_pitch_cd=%.1f tgt_q_r=%.3f gyro_p=%.3f",
+                        pitch_target_from_ac_cd,
+                        pitch_rate_target_rads,
+                        pitch_rate_current_rads);
+    }
 }
-float angle_to_servo_pwm(float alpha)
-{
-    float alpha_max = 0.5f;   // radians (~28 deg)
-    float pwm_center = 1500.0f;
-    float pwm_range  = 400.0f;
-
-    return pwm_center + (alpha / alpha_max) * pwm_range;
-}
+#endif
