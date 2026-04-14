@@ -71,7 +71,7 @@ Vector3f AC_CustomControl_FYP::update(void)
     _ahrs->get_relative_position_NED_home(position);
     _ahrs->get_velocity_NED(velocity);
 
-    float desired_x_pos = ...; // from your waypoint/guidance source
+float desired_x_pos = 0.0f;  // or get from mission/GCS
 
     // PID: position error → desired velocity
     float desired_vel = _pid_position_x.update_all(
@@ -84,7 +84,10 @@ Vector3f AC_CustomControl_FYP::update(void)
     // --- CONTROL ALLOCATION (physical calculations) ---
     // Map pitch_acc and x_acc to front thrust, rear thrust, tilt angle
     // This is the geometry-specific math for your frame:
-    float total_thrust = ...; // from throttle controller
+
+float total_thrust = _motors->get_throttle();  // get from throttle controller
+constexpr float K_pitch = 0.1f;
+constexpr float MAX_PITCH_ACC = 10.0f;
     _front_thrust = total_thrust/2.0f + desired_pitch_acc * K_pitch;
     _rear_thrust  = total_thrust/2.0f - desired_pitch_acc * K_pitch;
     _tilt_angle   = asinf(desired_acc / total_thrust); // simplified
