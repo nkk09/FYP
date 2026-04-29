@@ -270,7 +270,7 @@ protected:
     AC_PosControl *&pos_control;
     AP_AHRS &ahrs;
     AC_AttitudeControl *&attitude_control;
-    MOTOR_CLASS *&motors;
+    AP_MotorsMulticopter *&motors;
     RC_Channel *&channel_roll;
     RC_Channel *&channel_pitch;
     RC_Channel *&channel_throttle;

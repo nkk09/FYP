@@ -47,6 +47,7 @@
 #include <AC_AttitudeControl/AC_PosControl.h>                   // Position control library
 #include <AC_AttitudeControl/AC_CommandModel.h>                 // Command model library
 #include <AP_Motors/AP_Motors.h>            // AP Motors library
+#include <AP_Motors/AP_MotorsTricopterFYP.h>  // FYP custom tricopter mixer
 #include <Filter/Filter.h>                  // Filter library
 #include <AP_Vehicle/AP_Vehicle.h>          // needed for AHRS build
 #include <AC_WPNav/AC_WPNav.h>              // ArduCopter waypoint navigation library
@@ -80,7 +81,7 @@
 #if FRAME_CONFIG == HELI_FRAME
  #define MOTOR_CLASS AP_MotorsHeli
 #else
- #define MOTOR_CLASS AP_MotorsMulticopter
+ #define MOTOR_CLASS AP_MotorsTricopterFYP
 #endif
 
 #if MODE_AUTOROTATE_ENABLED
@@ -435,7 +436,7 @@ private:
     } dead_reckoning;
 
     // Motor Output
-    MOTOR_CLASS *motors;
+    AP_MotorsMulticopter *motors;  // Motors (can be AP_MotorsTricopterFYP or other subclass)
     const struct AP_Param::GroupInfo *motors_var_info;
 
     float _home_bearing_rad;

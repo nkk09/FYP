@@ -8,6 +8,9 @@
 #include <AC_PID/AC_P.h>
 #include <AC_PID/AC_PID.h>
 
+// Forward declaration of the custom motor mixer.
+class AP_MotorsTricopterFYP;
+
 class AC_CustomControl_FYP : public AC_CustomControl_Backend {
 public:
     AC_CustomControl_FYP(AC_CustomControl& frontend,
@@ -23,52 +26,37 @@ public:
 
 protected:
     // ---------------------------------------------------------------
-    // Tunable parameters (visible in GCS as CC3_ANG_P_PIT etc.)
+    // Outer-loop tunables  (appear as CC3_* in GCS when CC_TYPE = 3)
     // ---------------------------------------------------------------
-    AP_Float _kp_angle_pitch;       // outer P gain: pitch angle → rate
-    AP_Float _pitch_rate_max_cdss;  // max desired pitch rate (rad/s * 100)
-    AP_Float _pitch_out_max;        // clamp on normalised pitch output [-1,1]
-    AP_Float _rate_p;               // inner pitch-rate PID gains
-    AP_Float _rate_i;
-    AP_Float _rate_d;
-    AP_Float _rate_imax;
+    AP_Float _kp_angle_pitch;
+    AP_Float _rate_p, _rate_i, _rate_d, _rate_imax;
+    AP_Float _pos_p,  _pos_i,  _pos_d,  _pos_imax;
+    AP_Float _vel_p,  _vel_i,  _vel_d,  _vel_imax;
 
-    // Position loop tuning
-    AP_Float _pos_p;
-    AP_Float _pos_i;
-    AP_Float _pos_d;
-    AP_Float _pos_imax;
-    AP_Float _vel_p;
-    AP_Float _vel_i;
-    AP_Float _vel_d;
-    AP_Float _vel_imax;
+    // Physical parameters (match allocation equations).
+    AP_Float _mass;          // kg
+    AP_Float _inertia_pitch; // kg*m^2
+    AP_Float _arm_L;         // m
+    AP_Float _c_tail;        // dimensionless
 
-    // Control allocation constants
-    AP_Float _k_pitch;              // maps pitch_acc to differential thrust
-    AP_Float _tilt_scale;           // scales tilt angle to servo output units
+    AP_Int8  _pos_loop_enable;
 
     // ---------------------------------------------------------------
-    // Runtime controller objects  (initialised in constructor)
+    // Controllers
     // ---------------------------------------------------------------
-    // Pitch angle → rate (outer P)
     AC_P   _p_angle_pitch;
-
-    // Pitch rate → motor output (inner PID)
     AC_PID _pid_pitch_rate;
-
-    // X position → velocity (outer PID)
     AC_PID _pid_position_x;
-
-    // X velocity → acceleration (inner PID)
     AC_PID _pid_velocity_x;
 
-    // ---------------------------------------------------------------
-    // Control allocation state
-    // ---------------------------------------------------------------
-    float _front_thrust;
-    float _rear_thrust;
-    float _tilt_angle;
-    float _dt;              // timestep stored from constructor argument
+    // Most recent allocation outputs (kept for logging + mixer handoff).
+    float _last_Tf;
+    float _last_Tr;
+    float _last_alpha;
+    float _last_pitch_acc;
+    float _last_ax_sim;
+
+    float _dt;
 };
 
 #endif  // AP_CUSTOMCONTROL_FYP_ENABLED

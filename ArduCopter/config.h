@@ -257,17 +257,8 @@
 //////////////////////////////////////////////////////////////////////////////
 // Autorotate - autonomous auto-rotation - helicopters only
 #ifndef MODE_AUTOROTATE_ENABLED
-#if CONFIG_HAL_BOARD == HAL_BOARD_SITL
-    #if FRAME_CONFIG == HELI_FRAME
-        #ifndef MODE_AUTOROTATE_ENABLED
-        # define MODE_AUTOROTATE_ENABLED 1
-        #endif
-    #else
-        # define MODE_AUTOROTATE_ENABLED 0
-    #endif
-#else
-    # define MODE_AUTOROTATE_ENABLED 0
-#endif
+// FYP tricopter does not use the helicopter autorotation stack.
+# define MODE_AUTOROTATE_ENABLED 0
 #endif
 
 //////////////////////////////////////////////////////////////////////////////

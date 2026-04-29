@@ -362,74 +362,11 @@ bool Copter::should_log(uint32_t mask)
  */
 void Copter::allocate_motors(void)
 {
-    switch ((AP_Motors::motor_frame_class)g2.frame_class.get()) {
-#if FRAME_CONFIG != HELI_FRAME
-        case AP_Motors::MOTOR_FRAME_QUAD:
-        case AP_Motors::MOTOR_FRAME_HEXA:
-        case AP_Motors::MOTOR_FRAME_Y6:
-        case AP_Motors::MOTOR_FRAME_OCTA:
-        case AP_Motors::MOTOR_FRAME_OCTAQUAD:
-        case AP_Motors::MOTOR_FRAME_DODECAHEXA:
-        case AP_Motors::MOTOR_FRAME_DECA:
-        case AP_Motors::MOTOR_FRAME_SCRIPTING_MATRIX:
-        default:
-            motors = NEW_NOTHROW AP_MotorsMatrix(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsMatrix::var_info;
-            break;
-#if AP_MOTORS_TRI_ENABLED
-        case AP_Motors::MOTOR_FRAME_TRI:
-            motors = NEW_NOTHROW AP_MotorsTri(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsTri::var_info;
-            AP_Param::set_frame_type_flags(AP_PARAM_FRAME_TRICOPTER);
-            break;
-#endif  // AP_MOTORS_TRI_ENABLED
-        case AP_Motors::MOTOR_FRAME_SINGLE:
-            motors = NEW_NOTHROW AP_MotorsSingle(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsSingle::var_info;
-            break;
-        case AP_Motors::MOTOR_FRAME_COAX:
-            motors = NEW_NOTHROW AP_MotorsCoax(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsCoax::var_info;
-            break;
-        case AP_Motors::MOTOR_FRAME_TAILSITTER:
-            motors = NEW_NOTHROW AP_MotorsTailsitter(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsTailsitter::var_info;
-            break;
-        case AP_Motors::MOTOR_FRAME_6DOF_SCRIPTING:
-#if AP_SCRIPTING_ENABLED
-            motors = NEW_NOTHROW AP_MotorsMatrix_6DoF_Scripting(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsMatrix_6DoF_Scripting::var_info;
-#endif // AP_SCRIPTING_ENABLED
-            break;
-        case AP_Motors::MOTOR_FRAME_DYNAMIC_SCRIPTING_MATRIX:
-#if AP_SCRIPTING_ENABLED
-            motors = NEW_NOTHROW AP_MotorsMatrix_Scripting_Dynamic(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsMatrix_Scripting_Dynamic::var_info;
-#endif // AP_SCRIPTING_ENABLED
-            break;
-#else // FRAME_CONFIG == HELI_FRAME
-        case AP_Motors::MOTOR_FRAME_HELI_DUAL:
-            motors = NEW_NOTHROW AP_MotorsHeli_Dual(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsHeli_Dual::var_info;
-            AP_Param::set_frame_type_flags(AP_PARAM_FRAME_HELI);
-            break;
-
-        case AP_Motors::MOTOR_FRAME_HELI_QUAD:
-            motors = NEW_NOTHROW AP_MotorsHeli_Quad(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsHeli_Quad::var_info;
-            AP_Param::set_frame_type_flags(AP_PARAM_FRAME_HELI);
-            break;
-            
-        case AP_Motors::MOTOR_FRAME_HELI:
-        default:
-            motors = NEW_NOTHROW AP_MotorsHeli_Single(copter.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsHeli_Single::var_info;
-            AP_Param::set_frame_type_flags(AP_PARAM_FRAME_HELI);
-            break;
-#endif
-    }
+    // FYP branch: always use the custom tricopter mixer regardless of frame class param
+    motors = NEW_NOTHROW AP_MotorsTricopterFYP(copter.scheduler.get_loop_rate_hz());
+    motors_var_info = AP_MotorsMulticopter::var_info;
     if (motors == nullptr) {
-        AP_BoardConfig::allocation_error("FRAME_CLASS=%u", (unsigned)g2.frame_class.get());
+        AP_BoardConfig::allocation_error("AP_MotorsTricopterFYP");
     }
     AP_Param::load_object_from_eeprom(motors, motors_var_info);
 
@@ -438,20 +375,8 @@ void Copter::allocate_motors(void)
         AP_BoardConfig::allocation_error("AP_AHRS_View");
     }
 
-#if FRAME_CONFIG != HELI_FRAME
-    if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_6DOF_SCRIPTING) {
-#if AP_SCRIPTING_ENABLED
-        attitude_control = NEW_NOTHROW AC_AttitudeControl_Multi_6DoF(*ahrs_view, aparm, *motors);
-        attitude_control_var_info = AC_AttitudeControl_Multi_6DoF::var_info;
-#endif // AP_SCRIPTING_ENABLED
-    } else {
-        attitude_control = NEW_NOTHROW AC_AttitudeControl_Multi(*ahrs_view, aparm, *motors);
-        attitude_control_var_info = AC_AttitudeControl_Multi::var_info;
-    }
-#else
-    attitude_control = NEW_NOTHROW AC_AttitudeControl_Heli(*ahrs_view, aparm, *motors);
-    attitude_control_var_info = AC_AttitudeControl_Heli::var_info;
-#endif
+    attitude_control = NEW_NOTHROW AC_AttitudeControl_Multi(*ahrs_view, aparm, *motors);
+    attitude_control_var_info = AC_AttitudeControl_Multi::var_info;
     if (attitude_control == nullptr) {
         AP_BoardConfig::allocation_error("AttitudeControl");
     }
@@ -500,9 +425,9 @@ void Copter::allocate_motors(void)
         attitude_control->get_rate_yaw_pid().kP().set_default(0.15);
         attitude_control->get_rate_yaw_pid().kI().set_default(0.015);
         break;
-    case AP_Motors::MOTOR_FRAME_TRI:
-        attitude_control->get_rate_yaw_pid().filt_D_hz().set_default(100);
-        break;
+   case AP_Motors::MOTOR_FRAME_TRI_FYP:
+       // AP_MotorsTricopterFYP already allocated above; nothing more to do.
+       break;
     default:
         break;
     }

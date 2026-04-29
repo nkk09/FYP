@@ -35,9 +35,4 @@ def build(bld):
         defines=['FRAME_CONFIG=MULTICOPTER_FRAME'],
         )
 
-    bld.ap_program(
-        program_name='arducopter-heli',
-        program_groups=['bin', 'heli'],
-        use=vehicle + '_libs',
-        defines=['FRAME_CONFIG=HELI_FRAME'],
-        )
+    # FYP tricopter builds against the multicopter binary only.
