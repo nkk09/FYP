@@ -2090,12 +2090,12 @@ protected:
 
 private:
     // ===== Servo (tilt) behavior =====
-    static constexpr uint16_t SERVO_PWM_MIN  = 1100;
-    static constexpr uint16_t SERVO_PWM_TRIM = 1500;
-    static constexpr uint16_t SERVO_PWM_MAX  = 1900;
+    static constexpr uint16_t SERVO_PWM_MIN  = 500;
+    static constexpr uint16_t SERVO_PWM_TRIM = 1350;
+    static constexpr uint16_t SERVO_PWM_MAX  = 2200;
 
     // +/- pitch range where servo hits min/max
-    static constexpr float SERVO_PITCH_RANGE_DEG = 20.0f;
+    static constexpr float SERVO_PITCH_RANGE_DEG = 90.0f;
 
     // deadband around level
     static constexpr float PITCH_DEADBAND_DEG = 5.0f;
@@ -2106,7 +2106,13 @@ private:
 
     // debug
     static constexpr uint32_t MSG_PERIOD_MS = 2000;
-    uint32_t _last_msg_ms = 0;
+
+    uint32_t _last_msg_ms;
+    uint32_t _last_run_ms;
+
+    float _rate_error_integral;
+    float _last_rate_error;
+    float _d_term_filtered;
 };
 
 
