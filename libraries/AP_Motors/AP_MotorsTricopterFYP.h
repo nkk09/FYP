@@ -48,7 +48,12 @@ public:
     void set_frame_class_and_type(motor_frame_class frame_class,
                                   motor_frame_type  frame_type) override;
 
-    // tell motors to stop
+     // Virtual method override: pass FYP targets via base class interface
+     void set_custom_frame_targets(float tf, float tr, float alpha) override {
+       set_fyp_targets(tf, tr, alpha);
+     }
+
+     // tell motors to stop
     void _output_test_seq(uint8_t motor_seq, int16_t pwm) override {}
 
     const char* _get_frame_string() const override { return "TRICOPTER_FYP"; }

@@ -135,7 +135,7 @@ Vector3f AC_CustomControl_FYP::update(void)
     const float current_vx_sim = -current_vx_real;
 
     // Attitude target from the AC_AttitudeControl outer loops.
-    const float target_pitch_real = 60;
+    const float target_pitch_real = 90;
     //    -(_att_control->get_attitude_target_quat().get_euler_pitch());
 
     // Hold hover (x=0) unless a higher-level mode writes to a setpoint.
@@ -230,12 +230,11 @@ Vector3f AC_CustomControl_FYP::update(void)
     // AP_MotorsMulticopter pointer to our subclass; if the cast fails
     // this just means the user hasn't switched the frame — we silently
     // skip the direct-write path and fall back to pitch-only mode.
-    AP_MotorsTricopterFYP* fyp_motors =
-        dynamic_cast<AP_MotorsTricopterFYP*>(_motors);
-
-    if (fyp_motors != nullptr) {
-        fyp_motors->set_fyp_targets(Tf, Tr, alpha);
-    }
+     // Use the virtual method set_custom_frame_targets() which will be
+     // a no-op for standard frames but will be overridden in
+     // AP_MotorsTricopterFYP to call set_fyp_targets(). This avoids
+     // the need for dynamic_cast, which requires RTTI.
+     _motors->set_custom_frame_targets(Tf, Tr, alpha);
 
     _last_Tf        = Tf;
     _last_Tr        = Tr;
@@ -289,11 +288,7 @@ void AC_CustomControl_FYP::reset(void)
     _last_Tf = _last_Tr = _last_alpha = 0.0f;
     _last_pitch_acc = _last_ax_sim = 0.0f;
 
-    AP_MotorsTricopterFYP* fyp_motors =
-        dynamic_cast<AP_MotorsTricopterFYP*>(_motors);
-    if (fyp_motors != nullptr) {
-        fyp_motors->set_fyp_targets(0.0f, 0.0f, 0.0f);
-    }
+    _motors->set_custom_frame_targets(0.0f, 0.0f, 0.0f);
     SRV_Channels::set_output_scaled(SRV_Channel::k_motor_tilt, 0);
 }
 

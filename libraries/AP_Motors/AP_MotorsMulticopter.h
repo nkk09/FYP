@@ -83,6 +83,9 @@ public:
     // as vectoring is used for yaw control
     virtual void        disable_yaw_torque(void) {}
 
+    // set FYP targets for custom tricopter control (no-op for other frame types)
+    virtual void        set_custom_frame_targets(float tf, float tr, float alpha) {}
+
     // return whether a motor is enabled or not
     bool                is_motor_enabled(uint8_t i) override { return motor_enabled[i]; }
 
